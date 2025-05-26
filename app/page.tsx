@@ -1,48 +1,199 @@
+"use client"
+
+import { useState } from "react"
 import { ExternalChatbot } from "@/components/external-chatbot"
+import { HowToUseGuide } from "@/components/how-to-use-guide"
+import { DrugDatabase } from "@/components/drug-database"
+import { WelcomeModal } from "@/components/welcome-modal"
+import Image from "next/image"
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("chatbot")
+
+  const handleWelcomeComplete = (showGuide: boolean) => {
+    if (showGuide) {
+      setActiveTab("guide")
+    } else {
+      setActiveTab("chatbot")
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="border-b">
-        <div className="container flex items-center h-16 px-4 mx-auto">
-          <h1 className="text-xl font-bold text-emerald-600 flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-heart-pulse"
-            >
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              <path d="M3.22 12H9.5l.5-1 2 4 .5-1h6.78" />
-            </svg>
-            PharmaBot
-          </h1>
+      <WelcomeModal onGetStarted={handleWelcomeComplete} />
+
+      <header className="border-b bg-gradient-to-r from-emerald-50 to-blue-50">
+        <div className="container flex items-center h-20 px-4 mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white rounded-lg shadow-sm">
+              <Image
+                src="/images/pharmabot-logo.png"
+                alt="PharmaBot Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">PharmaBot Assistant</h1>
+              <p className="text-sm text-gray-600">Advanced Drug Information & Metabolism Analysis</p>
+            </div>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-md">
-            <p className="text-yellow-700 text-sm">
-              <strong>Disclaimer:</strong> This chatbot provides general drug information only and is not a substitute
-              for professional medical advice, diagnosis, or treatment. Always consult with a qualified healthcare
-              provider for medical concerns and before making any changes to your medication.
-            </p>
+            <div className="flex items-start">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-yellow-600 mt-0.5 mr-3 flex-shrink-0"
+              >
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <path d="M12 9v4" />
+                <path d="m12 17 .01 0" />
+              </svg>
+              <div>
+                <p className="text-yellow-800 text-sm font-medium mb-1">Medical Disclaimer</p>
+                <p className="text-yellow-700 text-sm">
+                  This chatbot provides drug information and metabolite data for{" "}
+                  <strong>drug repurposing research</strong> and educational purposes only. It is designed to support
+                  researchers in identifying potential new therapeutic applications for existing drugs. This is{" "}
+                  <strong>not a substitute</strong> for professional medical advice, clinical trials, or regulatory
+                  approval processes.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <ExternalChatbot />
+          <div className="w-full">
+            <div className="flex w-full border-b mb-6">
+              <button
+                onClick={() => setActiveTab("chatbot")}
+                className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+                  activeTab === "chatbot"
+                    ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                    : "border-transparent text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+                Drug Chatbot
+              </button>
+              <button
+                onClick={() => setActiveTab("guide")}
+                className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+                  activeTab === "guide"
+                    ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                    : "border-transparent text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                How to Use
+              </button>
+              <button
+                onClick={() => setActiveTab("database")}
+                className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+                  activeTab === "database"
+                    ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                    : "border-transparent text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+                  <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+                </svg>
+                Drug Database
+              </button>
+            </div>
+
+            {/* All tab content is always mounted, just hidden when not active */}
+            <div className={activeTab === "chatbot" ? "block" : "hidden"}>
+              <ExternalChatbot />
+            </div>
+
+            <div className={activeTab === "guide" ? "block" : "hidden"}>
+              <HowToUseGuide />
+            </div>
+
+            <div className={activeTab === "database" ? "block" : "hidden"}>
+              <DrugDatabase />
+            </div>
+          </div>
         </div>
       </main>
 
-      <footer className="border-t py-4">
-        <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Drug Information Chatbot. Not for emergency use.</p>
+      <footer className="border-t py-6 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-600">
+              © {new Date().getFullYear()} PharmaBot Assistant. For educational and research purposes only.
+            </p>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                Not for emergency use
+              </span>
+              <span>•</span>
+              <span>Call 911 for emergencies</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
