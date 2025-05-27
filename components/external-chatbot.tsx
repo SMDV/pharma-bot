@@ -9,7 +9,7 @@ export function ExternalChatbot() {
   const [isLoading, setIsLoading] = useState(true)
   const [key, setKey] = useState(0)
 
-  const chatbotUrl = "https://drug-chatbot-945825841069.asia-southeast2.run.app/"
+  const chatbotUrl = "https://drug-chatbot-945825841069.asia-southeast2.run.app/?__theme=light"
 
   const handleRefresh = () => {
     setIsLoading(true)
