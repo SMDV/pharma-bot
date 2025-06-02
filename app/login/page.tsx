@@ -21,63 +21,74 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      // Ensure the message is from Google's accounts domain and contains an authorization code
-      if (event.origin === "https://accounts.google.com" && event.data && event.data.code) {
-        if (popup) {
-          popup.close() // Close the pop-up once the code is received
-          setPopup(null)
-        }
-        setLoading(true)
-        setError(null)
+  const handleMessage = async (event: MessageEvent) => {
+    console.log("Received message event:", event)
 
-        const authorizationCode = event.data.code
+    // Temporarily prevent popup from closing immediately for debugging
+    // if (popup) {
+    //   popup.close();
+    //   setPopup(null);
+    // }
 
-        try {
-          // Send the authorization code to your backend via your API route handler
-          const response = await fetch("/api/auth/callback", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ authorization_code: authorizationCode }),
-          })
-
-          console.log("Response from /api/auth/callback:", response.ok ? "OK" : "NOT OK", response.status)
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            console.error("Backend authentication failed:", errorData)
-            setError(
-              `Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`,
-            )
-          } else {
-            // Authentication successful, redirect to home page
-            console.log("Authentication successful, attempting to redirect to /")
-            router.push("/")
-          }
-        } catch (e) {
-          console.error("Error during authentication callback:", e)
-          setError("Authentication failed: server error. Please try again.")
-        } finally {
-          setLoading(false)
-        }
-      } else if (event.origin === "https://accounts.google.com" && event.data && event.data.error) {
-        // Handle errors from Google pop-up
-        if (popup) {
-          popup.close()
-          setPopup(null)
-        }
-        setLoading(false)
-        setError(`Google login failed: ${event.data.error}. Please try again.`)
+    // Ensure the message is from Google's accounts domain and contains an authorization code
+    if (event.origin === "https://accounts.google.com" && event.data && event.data.code) {
+      // We will close the popup after processing, or you can manually close it for debugging
+      if (popup) {
+        // popup.close(); // Temporarily commented out for debugging
+        // setPopup(null); // Temporarily commented out for debugging
       }
-    }
+      setLoading(true)
+      setError(null)
 
-    window.addEventListener("message", handleMessage)
+      const authorizationCode = event.data.code
+
+      try {
+        // Send the authorization code to your backend via your API route handler
+        const response = await fetch("/api/auth/callback", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ authorization_code: authorizationCode }),
+        })
+
+        console.log("Response from /api/auth/callback:", response.ok ? "OK" : "NOT OK", response.status)
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("Backend authentication failed:", errorData)
+          setError(
+            `Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`,
+          )
+        } else {
+          // Authentication successful, redirect to home page
+          console.log("Authentication successful, attempting to redirect to /")
+          router.push("/")
+        }
+      } catch (e) {
+        console.error("Error during authentication callback:", e)
+        setError("Authentication failed: server error. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    } else if (event.origin === "https://accounts.google.com" && event.data && event.data.error) {
+      // Handle errors from Google pop-up
+      if (popup) {
+        // popup.close(); // Temporarily commented out for debugging
+        // setPopup(null); // Temporarily commented out for debugging
+      }
+      setLoading(false)
+      setError(`Google login failed: ${event.data.error}. Please try again.`)
+    }
+  }
+
+  useEffect(() => {
+    const handleMsg = handleMessage
+
+    window.addEventListener("message", handleMsg)
 
     return () => {
-      window.removeEventListener("message", handleMessage)
+      window.removeEventListener("message", handleMsg)
       if (popup) {
         popup.close() // Ensure pop-up is closed on component unmount
       }
@@ -87,6 +98,8 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     setLoading(true)
     setError(null)
+
+    console.log("Current window.location.origin:", window.location.origin)
 
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=postmessage&response_type=code&scope=email profile&access_type=offline&origin=${encodeURIComponent(window.location.origin)}`
 
