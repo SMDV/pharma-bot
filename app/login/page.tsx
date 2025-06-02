@@ -44,6 +44,8 @@ export default function LoginPage() {
             body: JSON.stringify({ authorization_code: authorizationCode }),
           })
 
+          console.log("Response from /api/auth/callback:", response.ok ? "OK" : "NOT OK", response.status)
+
           if (!response.ok) {
             const errorData = await response.json()
             console.error("Backend authentication failed:", errorData)
@@ -52,6 +54,7 @@ export default function LoginPage() {
             )
           } else {
             // Authentication successful, redirect to home page
+            console.log("Authentication successful, attempting to redirect to /")
             router.push("/")
           }
         } catch (e) {

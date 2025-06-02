@@ -32,6 +32,7 @@ export async function POST(request: Request) {
 
     const data = await response.json()
     const accessToken = data.data.access_token
+    console.log("Access token received from backend:", accessToken ? "YES" : "NO")
 
     // Set the access token as an HTTP-only cookie
     cookies().set("pharmabot_access_token", accessToken, {
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     })
+    console.log("Cookie 'pharmabot_access_token' set successfully.")
 
     // Return a success response
     return NextResponse.json({ success: true })

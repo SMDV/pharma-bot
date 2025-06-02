@@ -17,6 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     const token = getCookie("pharmabot_access_token")
+    console.log("Checking authentication on /page.tsx. Token found:", token ? "YES" : "NO")
     if (token) {
       setIsAuthenticated(true)
       // Only show welcome modal if user is authenticated and hasn't seen it before
