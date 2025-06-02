@@ -91,8 +91,9 @@ export default function LoginPage() {
             `Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`,
           )
         } else {
-          // Authentication successful, redirect to home page
-          console.log("Authentication successful, attempting to redirect to /")
+          // Authentication successful, set localStorage flag and redirect to home page
+          console.log("Authentication successful, setting localStorage flag and attempting to redirect to /")
+          localStorage.setItem("pharmabot_logged_in", "true") // Set the flag
           router.push("/")
         }
       } catch (e) {

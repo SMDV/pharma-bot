@@ -7,7 +7,7 @@ import { DrugDatabase } from "@/components/drug-database"
 import { WelcomeModal } from "@/components/welcome-modal"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { getCookie } from "cookies-next" // Import getCookie
+// Removed getCookie as it cannot read httpOnly cookies client-side
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("chatbot")
@@ -16,9 +16,11 @@ export default function Home() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
 
   useEffect(() => {
-    const token = getCookie("pharmabot_access_token")
-    console.log("Checking authentication on /page.tsx. Token found:", token ? "YES" : "NO")
-    if (token) {
+    // Check localStorage for the login flag
+    const loggedInFlag = localStorage.getItem("pharmabot_logged_in")
+    console.log("Checking authentication on /page.tsx. localStorage flag found:", loggedInFlag ? "YES" : "NO")
+
+    if (loggedInFlag === "true") {
       setIsAuthenticated(true)
       // Only show welcome modal if user is authenticated and hasn't seen it before
       const hasSeenWelcome = localStorage.getItem("pharmabot-welcome-seen")
@@ -26,7 +28,8 @@ export default function Home() {
         setShowWelcomeModal(true)
       }
     } else {
-      router.push("/login") // Redirect to login if not authenticated
+      // If the flag is not set, redirect to login
+      router.push("/login")
     }
   }, [router])
 
