@@ -4,15 +4,15 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
-import { useSearchParams, useRouter } from "next/navigation" // Import useRouter
+import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
-  const router = useRouter() // Initialize useRouter
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [popup, setPopup] = useState<Window | null>(null) // State to hold the pop-up window reference
+  const [popup, setPopup] = useState<Window | null>(null)
 
   useEffect(() => {
     const authError = searchParams.get("error")
@@ -79,13 +79,16 @@ export default function LoginPage() {
         popup.close() // Ensure pop-up is closed on component unmount
       }
     }
-  }, [popup, router]) // Depend on popup and router
+  }, [popup, router])
 
   const handleGoogleLogin = () => {
     setLoading(true)
     setError(null)
 
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=postmessage&response_type=code&scope=email profile&access_type=offline`
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=postmessage&response_type=code&scope=email profile&access_type=offline&origin=${encodeURIComponent(window.location.origin)}`
+
+    // Log the URL to the console before opening the pop-up
+    console.log("Google Auth URL being opened:", googleAuthUrl)
 
     // Open Google's OAuth consent screen in a new pop-up window
     const newPopup = window.open(googleAuthUrl, "googleLoginPopup", "width=500,height=600,resizable=yes,scrollbars=yes")
