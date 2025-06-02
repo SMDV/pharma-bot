@@ -21,74 +21,57 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
-  const handleMessage = async (event: MessageEvent) => {
-    console.log("Received message event:", event)
+  // Temporarily disable handleMessage for oob debugging
+  // const handleMessage = async (event: MessageEvent) => {
+  //   console.log("Received message event:", event);
+  //   if (event.origin === "https://accounts.google.com" && event.data && event.data.code) {
+  //     if (popup) {
+  //       popup.close();
+  //       setPopup(null);
+  //     }
+  //     setLoading(true);
+  //     setError(null);
 
-    // Temporarily prevent popup from closing immediately for debugging
-    // if (popup) {
-    //   popup.close();
-    //   setPopup(null);
-    // }
+  //     const authorizationCode = event.data.code;
 
-    // Ensure the message is from Google's accounts domain and contains an authorization code
-    if (event.origin === "https://accounts.google.com" && event.data && event.data.code) {
-      // We will close the popup after processing, or you can manually close it for debugging
-      if (popup) {
-        // popup.close(); // Temporarily commented out for debugging
-        // setPopup(null); // Temporarily commented out for debugging
-      }
-      setLoading(true)
-      setError(null)
+  //     try {
+  //       const response = await fetch("/api/auth/callback", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ authorization_code: authorizationCode }),
+  //       });
 
-      const authorizationCode = event.data.code
+  //       console.log("Response from /api/auth/callback:", response.ok ? "OK" : "NOT OK", response.status);
 
-      try {
-        // Send the authorization code to your backend via your API route handler
-        const response = await fetch("/api/auth/callback", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ authorization_code: authorizationCode }),
-        })
-
-        console.log("Response from /api/auth/callback:", response.ok ? "OK" : "NOT OK", response.status)
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error("Backend authentication failed:", errorData)
-          setError(
-            `Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`,
-          )
-        } else {
-          // Authentication successful, redirect to home page
-          console.log("Authentication successful, attempting to redirect to /")
-          router.push("/")
-        }
-      } catch (e) {
-        console.error("Error during authentication callback:", e)
-        setError("Authentication failed: server error. Please try again.")
-      } finally {
-        setLoading(false)
-      }
-    } else if (event.origin === "https://accounts.google.com" && event.data && event.data.error) {
-      // Handle errors from Google pop-up
-      if (popup) {
-        // popup.close(); // Temporarily commented out for debugging
-        // setPopup(null); // Temporarily commented out for debugging
-      }
-      setLoading(false)
-      setError(`Google login failed: ${event.data.error}. Please try again.`)
-    }
-  }
+  //       if (!response.ok) {
+  //         const errorData = await response.json();
+  //         console.error("Backend authentication failed:", errorData);
+  //         setError(`Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`);
+  //       } else {
+  //         console.log("Authentication successful, attempting to redirect to /");
+  //         router.push("/");
+  //       }
+  //     } catch (e) {
+  //       console.error("Error during authentication callback:", e);
+  //       setError("Authentication failed: server error. Please try again.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   } else if (event.origin === "https://accounts.google.com" && event.data && event.data.error) {
+  //     if (popup) {
+  //       popup.close();
+  //       setPopup(null);
+  //     }
+  //     setLoading(false);
+  //     setError(`Google login failed: ${event.data.error}. Please try again.`);
+  //   }
+  // };
 
   useEffect(() => {
-    const handleMsg = handleMessage
-
-    window.addEventListener("message", handleMsg)
-
+    // No message listener needed for oob flow
+    // window.addEventListener("message", handleMessage);
     return () => {
-      window.removeEventListener("message", handleMsg)
+      // window.removeEventListener("message", handleMessage);
       if (popup) {
         popup.close() // Ensure pop-up is closed on component unmount
       }
@@ -101,16 +84,14 @@ export default function LoginPage() {
 
     console.log("Current window.location.origin:", window.location.origin)
 
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=postmessage&response_type=code&scope=email profile&access_type=offline&origin=${encodeURIComponent(window.location.origin)}`
+    // TEMPORARY CHANGE FOR DEBUGGING: Use urn:ietf:wg:oauth:2.0:oob
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=email profile&access_type=offline`
 
-    // Log the URL to the console before opening the pop-up
-    console.log("Google Auth URL being opened:", googleAuthUrl)
+    console.log("Google Auth URL being opened (OOB for debugging):", googleAuthUrl)
 
-    // Open Google's OAuth consent screen in a new pop-up window
     const newPopup = window.open(googleAuthUrl, "googleLoginPopup", "width=500,height=600,resizable=yes,scrollbars=yes")
     setPopup(newPopup)
 
-    // Optional: Check if pop-up was blocked
     if (!newPopup || newPopup.closed || typeof newPopup.closed === "undefined") {
       setLoading(false)
       setError("Pop-up blocked by browser. Please allow pop-ups for this site.")
