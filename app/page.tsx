@@ -1,16 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ExternalChatbot } from "@/components/external-chatbot"
 import { HowToUseGuide } from "@/components/how-to-use-guide"
 import { DrugDatabase } from "@/components/drug-database"
 import { WelcomeModal } from "@/components/welcome-modal"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { getCookie } from "cookies-next" // Import getCookie
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("chatbot")
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+
+  useEffect(() => {
+    const token = getCookie("pharmabot_access_token")
+    if (token) {
+      setIsAuthenticated(true)
+      // Only show welcome modal if user is authenticated and hasn't seen it before
+      const hasSeenWelcome = localStorage.getItem("pharmabot-welcome-seen")
+      if (!hasSeenWelcome) {
+        setShowWelcomeModal(true)
+      }
+    } else {
+      router.push("/login") // Redirect to login if not authenticated
+    }
+  }, [router])
 
   const handleWelcomeComplete = (showGuide: boolean) => {
+    setShowWelcomeModal(false)
     if (showGuide) {
       setActiveTab("guide")
     } else {
@@ -18,9 +38,13 @@ export default function Home() {
     }
   }
 
+  if (!isAuthenticated) {
+    return null // Or a loading spinner while redirecting
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
-      <WelcomeModal onGetStarted={handleWelcomeComplete} />
+      {showWelcomeModal && <WelcomeModal onGetStarted={handleWelcomeComplete} />}
 
       <header className="border-b bg-gradient-to-r from-emerald-50 to-blue-50">
         <div className="container flex items-center h-20 px-4 mx-auto">
