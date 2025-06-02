@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
+  console.log("Received authorization code from Google:", code)
   const error = searchParams.get("error")
 
   if (error) {
