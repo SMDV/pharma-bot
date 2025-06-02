@@ -41,6 +41,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const codeClientRef = useRef<google.accounts.oauth2.CodeClient | null>(null)
+  const [isGsiClientReady, setIsGsiClientReady] = useState(false) // New state to track GSI client readiness
 
   useEffect(() => {
     const authError = searchParams.get("error")
@@ -56,7 +57,7 @@ export default function LoginPage() {
       setError(null)
 
       if (response.error) {
-        console.error("Error obtaining code from Google:", response)
+        console.error("Error obtaining code from Google GSI:", response)
         setError(`Google login failed: ${response.error_description || response.error}. Please try again.`)
         setLoading(false)
         return
@@ -106,15 +107,28 @@ export default function LoginPage() {
 
   // Initialize the GSI code client once the script is loaded
   const initializeGsiClient = useCallback(() => {
-    if (typeof window !== "undefined" && window.google && !codeClientRef.current) {
-      console.log("Initializing Google GSI code client...")
-      codeClientRef.current = window.google.accounts.oauth2.initCodeClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,
-        scope: "openid email profile",
-        ux_mode: "popup",
-        callback: handleCodeResponse,
-      })
-      console.log("Google GSI code client initialized.")
+    console.log("GSI script loaded. Attempting to initialize client...")
+    if (typeof window !== "undefined" && window.google) {
+      if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+        console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not defined. Cannot initialize GSI client.")
+        setError("Configuration error: Google Client ID is missing.")
+        return
+      }
+      try {
+        codeClientRef.current = window.google.accounts.oauth2.initCodeClient({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,
+          scope: "openid email profile",
+          ux_mode: "popup",
+          callback: handleCodeResponse,
+        })
+        console.log("Google GSI code client initialized successfully.")
+        setIsGsiClientReady(true) // Set state to true when client is ready
+      } catch (e) {
+        console.error("Error initializing Google GSI client:", e)
+        setError("Failed to initialize Google Sign-In. Please check console for details.")
+      }
+    } else {
+      console.log("window.google not available yet.")
     }
   }, [handleCodeResponse])
 
@@ -127,7 +141,7 @@ export default function LoginPage() {
       codeClientRef.current.requestCode()
     } else {
       setError("Google Sign-In client not initialized. Please try again.")
-      console.error("Google Sign-In client not initialized.")
+      console.error("Google Sign-In client not initialized. Button was clicked before readiness.")
     }
   }
 
@@ -160,7 +174,7 @@ export default function LoginPage() {
             <Button
               onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={loading || !codeClientRef.current} // Disable if loading or client not initialized
+              disabled={loading || !isGsiClientReady} // Use new state for button readiness
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in with Google
