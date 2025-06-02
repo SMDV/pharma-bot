@@ -1,20 +1,13 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const code = searchParams.get("code")
-  console.log("Received authorization code from Google:", code)
-  const error = searchParams.get("error")
-
-  if (error) {
-    // Redirect back to login page with error
-    return NextResponse.redirect(new URL(`/login?error=${error}`, request.url))
-  }
+export async function POST(request: Request) {
+  // Changed from GET to POST
+  const { authorization_code: code } = await request.json() // Extract code from JSON body
+  console.log("Received authorization code from Google (via postMessage):", code)
 
   if (!code) {
-    // Handle missing code
-    return NextResponse.redirect(new URL("/login?error=missing_code", request.url))
+    return NextResponse.json({ errors: [{ message: "missing_authorization_code" }] }, { status: 400 })
   }
 
   try {
@@ -30,8 +23,10 @@ export async function GET(request: Request) {
     if (!response.ok) {
       const errorData = await response.json()
       console.error("Backend authentication failed:", errorData)
-      return NextResponse.redirect(
-        new URL(`/login?error=${errorData.errors?.[0]?.message || "authentication_failed"}`, request.url),
+      // Return a JSON response for the client-side to handle
+      return NextResponse.json(
+        { errors: [{ message: errorData.errors?.[0]?.message || "authentication_failed" }] },
+        { status: response.status },
       )
     }
 
@@ -47,10 +42,10 @@ export async function GET(request: Request) {
       path: "/",
     })
 
-    // Redirect to the main application page
-    return NextResponse.redirect(new URL("/", request.url))
+    // Return a success response
+    return NextResponse.json({ success: true })
   } catch (e) {
     console.error("Error during authentication callback:", e)
-    return NextResponse.redirect(new URL("/login?error=server_error", request.url))
+    return NextResponse.json({ errors: [{ message: "server_error" }] }, { status: 500 })
   }
 }

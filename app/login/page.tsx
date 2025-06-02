@@ -4,13 +4,15 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation" // Import useRouter
 import Image from "next/image"
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
+  const router = useRouter() // Initialize useRouter
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [popup, setPopup] = useState<Window | null>(null) // State to hold the pop-up window reference
 
   useEffect(() => {
     const authError = searchParams.get("error")
@@ -19,10 +21,81 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      // Ensure the message is from Google's accounts domain and contains an authorization code
+      if (event.origin === "https://accounts.google.com" && event.data && event.data.code) {
+        if (popup) {
+          popup.close() // Close the pop-up once the code is received
+          setPopup(null)
+        }
+        setLoading(true)
+        setError(null)
+
+        const authorizationCode = event.data.code
+
+        try {
+          // Send the authorization code to your backend via your API route handler
+          const response = await fetch("/api/auth/callback", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ authorization_code: authorizationCode }),
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            console.error("Backend authentication failed:", errorData)
+            setError(
+              `Authentication failed: ${errorData.errors?.[0]?.message || "authentication_failed"}. Please try again.`,
+            )
+          } else {
+            // Authentication successful, redirect to home page
+            router.push("/")
+          }
+        } catch (e) {
+          console.error("Error during authentication callback:", e)
+          setError("Authentication failed: server error. Please try again.")
+        } finally {
+          setLoading(false)
+        }
+      } else if (event.origin === "https://accounts.google.com" && event.data && event.data.error) {
+        // Handle errors from Google pop-up
+        if (popup) {
+          popup.close()
+          setPopup(null)
+        }
+        setLoading(false)
+        setError(`Google login failed: ${event.data.error}. Please try again.`)
+      }
+    }
+
+    window.addEventListener("message", handleMessage)
+
+    return () => {
+      window.removeEventListener("message", handleMessage)
+      if (popup) {
+        popup.close() // Ensure pop-up is closed on component unmount
+      }
+    }
+  }, [popup, router]) // Depend on popup and router
+
   const handleGoogleLogin = () => {
     setLoading(true)
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + "/api/auth/callback")}&response_type=code&scope=email profile&access_type=offline`
-    window.location.href = googleAuthUrl
+    setError(null)
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}&redirect_uri=postmessage&response_type=code&scope=email profile&access_type=offline`
+
+    // Open Google's OAuth consent screen in a new pop-up window
+    const newPopup = window.open(googleAuthUrl, "googleLoginPopup", "width=500,height=600,resizable=yes,scrollbars=yes")
+    setPopup(newPopup)
+
+    // Optional: Check if pop-up was blocked
+    if (!newPopup || newPopup.closed || typeof newPopup.closed === "undefined") {
+      setLoading(false)
+      setError("Pop-up blocked by browser. Please allow pop-ups for this site.")
+    }
   }
 
   return (
