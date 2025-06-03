@@ -7,7 +7,8 @@ import { DrugDatabase } from "@/components/drug-database"
 import { WelcomeModal } from "@/components/welcome-modal"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-// Removed getCookie as it cannot read httpOnly cookies client-side
+import { Button } from "@/components/ui/button" // Import Button component
+import { LogOut } from "lucide-react" // Import LogOut icon
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("chatbot")
@@ -42,6 +43,14 @@ export default function Home() {
     }
   }
 
+  const handleLogout = () => {
+    console.log("Logging out: Clearing localStorage flags and redirecting.")
+    localStorage.removeItem("pharmabot_logged_in") // Clear the login flag
+    localStorage.removeItem("pharmabot-welcome-seen") // Clear welcome modal flag for next login
+    setIsAuthenticated(false) // Update state to trigger redirect
+    router.push("/login") // Redirect to login page
+  }
+
   if (!isAuthenticated) {
     return null // Or a loading spinner while redirecting
   }
@@ -51,7 +60,9 @@ export default function Home() {
       {showWelcomeModal && <WelcomeModal onGetStarted={handleWelcomeComplete} />}
 
       <header className="border-b bg-gradient-to-r from-emerald-50 to-blue-50">
-        <div className="container flex items-center h-20 px-4 mx-auto">
+        <div className="container flex items-center justify-between h-20 px-4 mx-auto">
+          {" "}
+          {/* Added justify-between */}
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white rounded-lg shadow-sm">
               <Image
@@ -67,6 +78,11 @@ export default function Home() {
               <p className="text-sm text-gray-600">Advanced Drug Information & Metabolism Analysis</p>
             </div>
           </div>
+          {/* Logout Button */}
+          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </div>
       </header>
 
