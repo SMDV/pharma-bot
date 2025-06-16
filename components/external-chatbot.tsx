@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, ExternalLink } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 
 export function ExternalChatbot() {
   const [isLoading, setIsLoading] = useState(true)
