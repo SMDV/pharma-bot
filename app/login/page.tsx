@@ -46,7 +46,7 @@ export default function LoginPage() {
   // Highlight: Direct boolean to control debug button visibility
   // Set to 'true' for development/debugging.
   // IMPORTANT: Change to 'false' before deploying to production!
-  const showDebugButton = true // Set to 'false' for production deployment
+  const showDebugButton = false // Set to 'false' for production deployment
 
   useEffect(() => {
     const authError = searchParams.get("error")
