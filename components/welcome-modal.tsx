@@ -56,21 +56,21 @@ export function WelcomeModal({ onGetStarted }: WelcomeModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="text-center space-y-4">
-          <div className="mx-auto p-4 bg-white rounded-full w-20 h-20 flex items-center justify-center shadow-lg">
+          <div className="mx-auto p-3 bg-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg">
             <Image
               src="/images/pharmabot-logo.png"
               alt="PharmaBot Logo"
-              width={60}
-              height={60}
+              width={50}
+              height={50}
               className="object-contain"
             />
           </div>
-          <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent text-center">
+          <DialogTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent text-center">
             Welcome to PharmaBot Assistant
           </DialogTitle>
-          <DialogDescription className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <DialogDescription className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
             Your AI-powered companion for drug repurposing research. Discover new therapeutic applications for existing
             medications through advanced drug information analysis.
           </DialogDescription>

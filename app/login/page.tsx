@@ -43,6 +43,11 @@ export default function LoginPage() {
   const codeClientRef = useRef<google.accounts.oauth2.CodeClient | null>(null)
   const [isGsiClientReady, setIsGsiClientReady] = useState(false) // New state to track GSI client readiness
 
+  // Highlight: Direct boolean to control debug button visibility
+  // Set to 'true' for development/debugging.
+  // IMPORTANT: Change to 'false' before deploying to production!
+  const showDebugButton = false // Set to 'false' for production deployment
+
   useEffect(() => {
     const authError = searchParams.get("error")
     if (authError) {
@@ -133,16 +138,17 @@ export default function LoginPage() {
     }
   }, [handleCodeResponse])
 
-  // Trigger the GSI login flow
+  // Handle debug bypass login
+  const handleDebugBypassLogin = () => {
+    console.log("Debug bypass login: Setting localStorage flag and redirecting.")
+    localStorage.setItem("pharmabot_logged_in", "true")
+    router.push("/")
+  }
+
+  // Function to handle Google login
   const handleGoogleLogin = () => {
     if (codeClientRef.current) {
-      setLoading(true)
-      setError(null)
-      console.log("Requesting code from Google GSI...")
       codeClientRef.current.requestCode()
-    } else {
-      setError("Google Sign-In client not initialized. Please try again.")
-      console.error("Google Sign-In client not initialized. Button was clicked before readiness.")
     }
   }
 
@@ -184,6 +190,16 @@ export default function LoginPage() {
             <p className="text-sm text-gray-500 text-center">
               No registration needed. Your Google account is used for one-way verification.
             </p>
+            {/* Highlight: Conditionally render the Debug Bypass Login Button */}
+            {showDebugButton && (
+              <Button
+                onClick={handleDebugBypassLogin}
+                variant="secondary"
+                className="w-full flex items-center justify-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800"
+              >
+                Debug Bypass Login (Dev Only)
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

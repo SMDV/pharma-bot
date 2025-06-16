@@ -6,33 +6,26 @@ import { HowToUseGuide } from "@/components/how-to-use-guide"
 import { DrugDatabase } from "@/components/drug-database"
 import { WelcomeModal } from "@/components/welcome-modal"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button" // Import Button component
-import { LogOut } from "lucide-react" // Import LogOut icon
 
-export default function Home() {
+interface AppShellProps {
+  initialIsAuthenticated: boolean
+}
+
+export function AppShell({ initialIsAuthenticated }: AppShellProps) {
   const [activeTab, setActiveTab] = useState("chatbot")
-  const router = useRouter()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(initialIsAuthenticated)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
 
   useEffect(() => {
-    // Check localStorage for the login flag
-    const loggedInFlag = localStorage.getItem("pharmabot_logged_in")
-    console.log("Checking authentication on /page.tsx. localStorage flag found:", loggedInFlag ? "YES" : "NO")
-
-    if (loggedInFlag === "true") {
-      setIsAuthenticated(true)
-      // Only show welcome modal if user is authenticated and hasn't seen it before
+    // Only show welcome modal if user is authenticated and hasn't seen it before
+    // The initial isAuthenticated state comes from the server component
+    if (isAuthenticated) {
       const hasSeenWelcome = localStorage.getItem("pharmabot-welcome-seen")
       if (!hasSeenWelcome) {
         setShowWelcomeModal(true)
       }
-    } else {
-      // If the flag is not set, redirect to login
-      router.push("/login")
     }
-  }, [router])
+  }, [isAuthenticated])
 
   const handleWelcomeComplete = (showGuide: boolean) => {
     setShowWelcomeModal(false)
@@ -43,26 +36,18 @@ export default function Home() {
     }
   }
 
-  const handleLogout = () => {
-    console.log("Logging out: Clearing localStorage flags and redirecting.")
-    localStorage.removeItem("pharmabot_logged_in") // Clear the login flag
-    localStorage.removeItem("pharmabot-welcome-seen") // Clear welcome modal flag for next login
-    setIsAuthenticated(false) // Update state to trigger redirect
-    router.push("/login") // Redirect to login page
-  }
-
-  if (!isAuthenticated) {
-    return null // Or a loading spinner while redirecting
-  }
+  // If for some reason isAuthenticated becomes false client-side (e.g., token expires),
+  // the server component will handle the redirect on next navigation.
+  // We don't need a client-side redirect here as the server component handles initial auth.
 
   return (
     <div className="flex flex-col min-h-screen">
       {showWelcomeModal && <WelcomeModal onGetStarted={handleWelcomeComplete} />}
 
       <header className="border-b bg-gradient-to-r from-emerald-50 to-blue-50">
-        <div className="container flex flex-col sm:flex-row items-center justify-between h-auto sm:h-20 px-4 py-4 sm:py-0 mx-auto">
-          <div className="flex items-center gap-3 mb-4 sm:mb-0">
-            <div className="p-2 bg-white rounded-lg shadow-sm flex-shrink-0">
+        <div className="container flex items-center h-20 px-4 mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white rounded-lg shadow-sm">
               <Image
                 src="/images/pharmabot-logo.png"
                 alt="PharmaBot Logo"
@@ -71,16 +56,11 @@ export default function Home() {
                 className="object-contain"
               />
             </div>
-            <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">PharmaBot Assistant</h1>
-              <p className="text-xs sm:text-sm text-gray-600">Advanced Drug Information & Metabolism Analysis</p>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">PharmaBot Assistant</h1>
+              <p className="text-sm text-gray-600">Advanced Drug Information & Metabolism Analysis</p>
             </div>
           </div>
-          {/* Logout Button */}
-          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 flex-shrink-0">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
         </div>
       </header>
 

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
+// No need to import cookies from next/headers if backend sets it directly
 
 export async function POST(request: Request) {
-  // Changed from GET to POST
-  const { authorization_code: code } = await request.json() // Extract code from JSON body
+  const { authorization_code: code } = await request.json()
   console.log("Received authorization code from Google (via postMessage):", code)
 
   if (!code) {
@@ -12,6 +11,7 @@ export async function POST(request: Request) {
 
   try {
     // Exchange authorization code for access token with your backend
+    // Your backend is responsible for setting the httpOnly cookie directly on the browser.
     const response = await fetch(`${process.env.NEXT_PUBLIC_PHARMABOT_BASE_URL}/authenticate`, {
       method: "POST",
       headers: {
@@ -30,21 +30,11 @@ export async function POST(request: Request) {
       )
     }
 
-    const data = await response.json()
-    const accessToken = data.data.access_token
-    console.log("Access token received from backend:", accessToken ? "YES" : "NO")
+    // If the backend responded with OK, it means it successfully handled authentication
+    // and set the httpOnly cookie directly.
+    console.log("Backend authentication successful. Assuming backend set httpOnly cookie.")
 
-    // Set the access token as an HTTP-only cookie
-    cookies().set("pharmabot_access_token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure in production
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: "/",
-    })
-    console.log("Cookie 'pharmabot_access_token' set successfully.")
-
-    // Return a success response
+    // Return a success response to the client-side login page
     return NextResponse.json({ success: true })
   } catch (e) {
     console.error("Error during authentication callback:", e)

@@ -10,6 +10,7 @@ import drugsData from "@/data/drugs.json"
 
 export function DrugDatabase() {
   const [searchTerm, setSearchTerm] = useState("")
+  // selectedCategory can now be "all", "parent", "metabolites", or a specific category name like "Antidepressants"
   const [selectedCategory, setSelectedCategory] = useState("all")
 
   // Process the drug data
@@ -28,26 +29,9 @@ export function DrugDatabase() {
     return { parentDrugs, metabolites, allDrugs: drugs }
   }, [])
 
-  // Filter drugs based on search term and category
-  const filteredDrugs = useMemo(() => {
-    let drugsToFilter = []
-
-    if (selectedCategory === "parent") {
-      drugsToFilter = processedDrugs.parentDrugs
-    } else if (selectedCategory === "metabolites") {
-      drugsToFilter = processedDrugs.metabolites
-    } else {
-      drugsToFilter = processedDrugs.allDrugs
-    }
-
-    if (!searchTerm) return drugsToFilter
-
-    return drugsToFilter.filter((drug) => drug.toLowerCase().includes(searchTerm.toLowerCase()))
-  }, [searchTerm, selectedCategory, processedDrugs])
-
-  // Get drug categories for statistics
+  // Get drug categories with their respective drugs
   const drugCategories = useMemo(() => {
-    const categories = {
+    const categoriesMap: Record<string, string[]> = {
       Antidepressants: [
         "amitriptyline",
         "citalopram",
@@ -64,21 +48,63 @@ export function DrugDatabase() {
       Psychiatric: ["clozapine", "aripiprazole", "haloperidol", "midazolam", "diazepam"],
       Hormones: ["estradiol", "progesterone"],
       Cannabis: ["dronabinol", "cannabidiol"],
-      Other: [],
+      Other: [], // This will be dynamically populated
     }
 
-    // Count drugs in each category
-    const categoryCounts = {}
-    Object.keys(categories).forEach((cat) => {
-      categoryCounts[cat] = categories[cat].filter((drug) => processedDrugs.parentDrugs.includes(drug)).length
-    })
+    const allParentDrugsSet = new Set(processedDrugs.parentDrugs)
+    const categorizedParentDrugsSet = new Set<string>()
 
-    // Count uncategorized drugs
-    const categorizedDrugs = Object.values(categories).flat()
-    categoryCounts["Other"] = processedDrugs.parentDrugs.filter((drug) => !categorizedDrugs.includes(drug)).length
+    // Filter existing categories to only include parent drugs present in our data
+    // and track which parent drugs have been categorized
+    for (const categoryName in categoriesMap) {
+      if (categoryName !== "Other") {
+        categoriesMap[categoryName] = categoriesMap[categoryName].filter((drug) => {
+          if (allParentDrugsSet.has(drug)) {
+            categorizedParentDrugsSet.add(drug)
+            return true
+          }
+          return false
+        })
+      }
+    }
 
-    return categoryCounts
+    // Populate the "Other" category with any parent drugs not explicitly listed in other categories
+    categoriesMap["Other"] = processedDrugs.parentDrugs.filter((drug) => !categorizedParentDrugsSet.has(drug))
+
+    return categoriesMap
   }, [processedDrugs])
+
+  // Filter drugs based on search term and selected category
+  const filteredDrugs = useMemo(() => {
+    let drugsToFilter: string[] = []
+
+    // Determine the base list of drugs based on the selected primary filter (All, Parent, Metabolites)
+    if (selectedCategory === "all") {
+      drugsToFilter = processedDrugs.allDrugs
+    } else if (selectedCategory === "parent") {
+      drugsToFilter = processedDrugs.parentDrugs
+    } else if (selectedCategory === "metabolites") {
+      drugsToFilter = processedDrugs.metabolites
+    } else if (drugCategories[selectedCategory]) {
+      // If a specific category card was clicked, use its list of drugs
+      drugsToFilter = drugCategories[selectedCategory]
+    } else {
+      // Default to all drugs if no specific filter is active (e.g., initial load)
+      drugsToFilter = processedDrugs.allDrugs
+    }
+
+    // Apply search term filter
+    if (searchTerm) {
+      return drugsToFilter.filter((drug) => drug.toLowerCase().includes(searchTerm.toLowerCase()))
+    }
+
+    return drugsToFilter
+  }, [searchTerm, selectedCategory, processedDrugs, drugCategories])
+
+  // Determine if a specific category card is selected (not "all", "parent", or "metabolites")
+  const isCategoryFilterActive = useMemo(() => {
+    return !["all", "parent", "metabolites"].includes(selectedCategory)
+  }, [selectedCategory])
 
   return (
     <div className="space-y-6">
@@ -149,21 +175,30 @@ export function DrugDatabase() {
             <div className="flex gap-2">
               <Button
                 variant={selectedCategory === "all" ? "default" : "outline"}
-                onClick={() => setSelectedCategory("all")}
+                onClick={() => {
+                  setSelectedCategory("all")
+                  setSearchTerm("")
+                }}
                 size="sm"
               >
                 All
               </Button>
               <Button
                 variant={selectedCategory === "parent" ? "default" : "outline"}
-                onClick={() => setSelectedCategory("parent")}
+                onClick={() => {
+                  setSelectedCategory("parent")
+                  setSearchTerm("")
+                }}
                 size="sm"
               >
                 Parent Drugs
               </Button>
               <Button
                 variant={selectedCategory === "metabolites" ? "default" : "outline"}
-                onClick={() => setSelectedCategory("metabolites")}
+                onClick={() => {
+                  setSelectedCategory("metabolites")
+                  setSearchTerm("")
+                }}
                 size="sm"
               >
                 Metabolites
@@ -176,7 +211,9 @@ export function DrugDatabase() {
           </div>
 
           {/* Results */}
-          <div className="max-h-96 overflow-y-auto border rounded-lg p-4">
+          <div
+            className={`max-h-96 overflow-y-auto border rounded-lg p-4 ${isCategoryFilterActive ? "bg-emerald-50 border-emerald-500" : ""}`}
+          >
             <div className="grid gap-2">
               {filteredDrugs.length > 0 ? (
                 filteredDrugs.map((drug, index) => (
@@ -209,20 +246,32 @@ export function DrugDatabase() {
             <Filter className="h-5 w-5" />
             Drug Categories
           </CardTitle>
-          <CardDescription>Browse drugs by therapeutic category</CardDescription>
+          {/* Added user-friendly hint */}
+          <CardDescription className="text-sm text-gray-600">
+            Click a category below to filter the drug list.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(drugCategories).map(([category, count]) => (
-              <div key={category} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          <div className="grid gap-4 md:grid-cols-2">
+            {Object.entries(drugCategories).map(([categoryName, drugsInCat]) => (
+              <Card
+                key={categoryName}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  selectedCategory === categoryName ? "bg-emerald-50 border-emerald-500" : "hover:bg-gray-50"
+                }`}
+                onClick={() => {
+                  setSelectedCategory(categoryName) // Set the specific category name
+                  setSearchTerm("") // Clear search term when a category is clicked
+                }}
+              >
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-800">{category}</h4>
-                  <Badge variant="outline">{count}</Badge>
+                  <h4 className="font-semibold text-gray-800">{categoryName}</h4>
+                  <Badge variant="outline">{drugsInCat.length}</Badge>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
-                  {count} {count === 1 ? "drug" : "drugs"} available
+                  {drugsInCat.length} {drugsInCat.length === 1 ? "drug" : "drugs"} available
                 </p>
-              </div>
+              </Card>
             ))}
           </div>
         </CardContent>
